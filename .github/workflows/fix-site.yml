@@ -1,0 +1,109 @@
+name: Fix site (Back button + remove donate)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run fix script
+        run: |
+          python3 - <<'PYEOF'
+          import os
+          import re
+
+          MARKER = "<!-- back-btn -->"
+
+          # شكل زرار الرجوع (inline عشان يشتغل في أي صفحة)
+          BTN = (
+              MARKER
+              + '<a href="{target}" style="position:fixed;top:10px;left:10px;z-index:9999;'
+              'background:#003263;color:#fff;padding:8px 18px;border-radius:4px;'
+              'font-family:Arial,sans-serif;font-size:16px;text-decoration:none;">'
+              "&#9664; Back</a>"
+          )
+
+          SKIP = {"index.html", os.path.join("restore", "index.html")}
+
+
+          def read(path):
+              with open(path, "r", encoding="utf-8", errors="surrogateescape", newline="") as f:
+                  return f.read()
+
+
+          def write(path, text):
+              with open(path, "w", encoding="utf-8", errors="surrogateescape", newline="") as f:
+                  f.write(text)
+
+
+          def target_for(rel):
+              depth = rel.count(os.sep)
+              if rel.startswith("restore" + os.sep) and depth == 2:
+                  return "../index.html"  # يرجع لقايمة الـ restore
+              return "../" * depth + "index.html"  # يرجع للقايمة الرئيسية
+
+
+          added = 0
+          for root, dirs, files in os.walk("."):
+              dirs[:] = [d for d in dirs if d != ".git"]
+              for name in files:
+                  if not name.lower().endswith(".html"):
+                      continue
+                  path = os.path.join(root, name)
+                  rel = os.path.normpath(path)
+                  if rel in SKIP:
+                      continue
+                  text = read(path)
+                  if MARKER in text:
+                      continue
+                  m = re.search(r"<body[^>]*>", text, re.I)
+                  if not m:
+                      continue
+                  btn = BTN.format(target=target_for(rel))
+                  write(path, text[: m.end()] + btn + text[m.end():])
+                  print("اتضاف زرار Back:", rel)
+                  added += 1
+
+          # ---- مسح زرار التبرعات من الصفحة الرئيسية ----
+          removed = False
+          if os.path.exists("index.html"):
+              t = read("index.html")
+              o = t
+              # الزرار نفسه (سطر واحد)
+              t = re.sub(r"[ \t]*<button[^>]*donations\(\)[^>]*>.*?</button>[ \t]*\r?\n?", "", t, flags=re.S)
+              # قسم العناوين (crypto)
+              t = re.sub(r"<div id=crypto>.*?</div>\s*", "", t, flags=re.S)
+              # الدوال بتاعت التبرعات
+              t = re.sub(r"function donations\(\)\s*\{.*?\}\s*", "", t, flags=re.S)
+              t = re.sub(r"function load_menu\(\)\s*\{.*?\}\s*", "", t, flags=re.S)
+              if t != o:
+                  write("index.html", t)
+                  removed = True
+
+          print(f"\nخلص. زرار Back اتضاف في {added} ملف.")
+          print("زرار التبرعات اتمسح." if removed else "زرار التبرعات مش موجود (أو اتمسح قبل كده).")
+          PYEOF
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Add Back button and remove donate button"
+            git push
+          fi
+
+      - name: Trigger Pages rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "/repos/${{ github.repository }}/pages/builds" || true
