@@ -1,13 +1,49 @@
+/* sinai-design */
 html {
-    background-image: linear-gradient(rgba(0,0,0,.28), rgba(0,0,0,.42)), url('sinai-background.jpg');
-    background-position: center;
-    background-size: cover;
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-    background-color: #24272b;
+    background-color: #02050a;
     color: white;
     text-align: center;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    background-color: #02050a;
+    background-image: linear-gradient(rgba(0,0,0,.28), rgba(0,0,0,.42)), url('sinai-background.jpg');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: 100% 100%, contain;
+}
+
+@media (max-aspect-ratio: 1/1) {
+    body::before {
+        background-position: center center, center bottom;
+    }
+}
+
+.credit {
+    font-size: 30px;
+    margin-top: 40px;
+    margin-bottom: 20px;
+    padding: 0 10px;
+}
+
+.credit a {
+    color: #f31414;
+}
+
+@media (max-width: 600px) {
+    .credit {
+        font-size: 22px;
+        margin-top: 28px;
+    }
 }
 
 h1 {
