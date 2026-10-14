@@ -4,6 +4,7 @@ CACHE:
 ../img.jpg
 ../style.css
 ../sinai-background.jpg
+../sinai-background-mobile.jpg
 app2usb.bin
 backup.bin
 disable-aslr.bin
@@ -64,4 +65,4 @@ webrte.bin
 
 NETWORK: 
 * 
-# v1
+# v2

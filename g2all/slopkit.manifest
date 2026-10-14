@@ -4,6 +4,7 @@ CACHE:
 ../img.jpg
 ../style.css
 ../sinai-background.jpg
+../sinai-background-mobile.jpg
 goldhen_2.4b18.12.bin
 index.html
 slopkit\chain_lapse.js
@@ -25,4 +26,4 @@ slopkit\patches\1352.bin
 
 NETWORK:
 *
-# v1
+# v2

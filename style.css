@@ -125,3 +125,27 @@ a {
 .btn-multi:hover {
     background-color: #daa520;
 }
+
+/* sinai-mobile-v2 */
+@media (max-aspect-ratio: 1/1) {
+    html {
+        height: 100%;
+    }
+    body {
+        box-sizing: border-box;
+        position: relative;
+        min-height: 100%;
+        margin: 0;
+        padding: 8px 8px 48vw 8px;
+    }
+    .credit {
+        margin-bottom: 0;
+    }
+    body::before {
+        position: absolute;
+        background-color: #02050a;
+        background-image: url('sinai-background-mobile.jpg');
+        background-size: 100% auto;
+        background-position: center bottom;
+    }
+}

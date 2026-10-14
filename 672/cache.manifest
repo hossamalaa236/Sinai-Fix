@@ -4,6 +4,7 @@ CACHE:
 ../img.jpg
 ../style.css
 ../sinai-background.jpg
+../sinai-background-mobile.jpg
 frontend.js
 goldhen_2.4b18.12.bin
 index.html
@@ -59,4 +60,4 @@ WildeModz-1.46.bin
 
 NETWORK: 
 * 
-# v1
+# v2
