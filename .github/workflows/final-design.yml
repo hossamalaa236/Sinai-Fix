@@ -1,0 +1,167 @@
+name: Final design (full-page background + fixed credit)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run update script
+        run: |
+          python3 - <<'PYEOF'
+          import glob
+          import re
+
+          START = "/* sinai-design-v3 start */"
+          END = "/* sinai-design-v3 end */"
+
+          NEW_BLOCK = START + """
+          html {
+              background-color: #02050a;
+              color: white;
+              text-align: center;
+              overflow-x: hidden;
+              overflow-y: auto;
+          }
+
+          body::before {
+              content: "";
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              z-index: -1;
+              background-color: #02050a;
+              background-image: linear-gradient(rgba(0,0,0,.28), rgba(0,0,0,.42)), url('sinai-background.jpg');
+              background-repeat: no-repeat;
+              background-position: center center;
+              background-size: 100% 100%;
+          }
+
+          /* السطر ده ثابت في الشريط الأسود اللي تحت الصورة في كل الأجهزة */
+          .credit {
+              position: fixed;
+              left: 0;
+              right: 0;
+              bottom: 1.5%;
+              margin: 0;
+              padding: 0 10px;
+              z-index: 50;
+              font-size: 32px;
+              line-height: 1.1;
+              text-align: center;
+              text-shadow: 0 0 6px #000, 0 0 12px #000;
+          }
+
+          .credit a {
+              color: #ff3b3b;
+          }
+
+          @media (max-width: 700px) {
+              .credit {
+                  font-size: 22px;
+              }
+          }
+
+          @media (max-width: 400px) {
+              .credit {
+                  font-size: 19px;
+              }
+          }
+
+          @media (max-height: 560px) {
+              .credit {
+                  font-size: 16px;
+              }
+          }
+          """ + END + "\n"
+
+          NEW_CREDIT = (
+              '<h1 class="credit">Designed by: Hossam_Alaa - '
+              '<a href="https://www.facebook.com/Sinaifix" target="_blank">Sinaifix</a></h1>'
+          )
+
+
+          def read(p):
+              with open(p, "r", encoding="utf-8", errors="surrogateescape", newline="") as f:
+                  return f.read()
+
+
+          def write(p, t):
+              with open(p, "w", encoding="utf-8", errors="surrogateescape", newline="") as f:
+                  f.write(t)
+
+
+          # ---- 1) style.css : نمسح التعديلات القديمة ونحط الجديد ----
+          css = read("style.css")
+
+          # تعديل الموبايل القديم (كان بيتضاف في آخر الملف)
+          i = css.find("/* sinai-mobile-v2 */")
+          if i != -1:
+              css = css[:i].rstrip() + "\n"
+
+          # بلوك التصميم القديم
+          css = re.sub(
+              r"/\* sinai-design \*/.*?@media \(max-width: 600px\) \{.*?\n\}\n",
+              "",
+              css,
+              count=1,
+              flags=re.S,
+          )
+
+          # بلوك النسخة دي (لو اتشغلت قبل كده)
+          css = re.sub(re.escape(START) + r".*?" + re.escape(END) + r"\s*", "", css, flags=re.S)
+
+          # html الأصلي القديم (لو لسه موجود)
+          css = re.sub(r"^\s*html\s*\{.*?\}\s*", "", css, count=1, flags=re.S)
+
+          write("style.css", NEW_BLOCK + "\n" + css.lstrip())
+          print("style.css اتعدل")
+
+          # ---- 2) index.html : سطر Designed by ----
+          t = read("index.html")
+          pat = re.compile(r"<h1[^>]*>\s*Designed by:.*?</h1>", re.S)
+          if pat.search(t):
+              write("index.html", pat.sub(lambda m: NEW_CREDIT, t, count=1))
+              print("سطر Designed by اتعدل")
+          else:
+              print("مش لاقي سطر Designed by في index.html")
+
+          # ---- 3) ملفات الكاش : علامة نسخة جديدة ----
+          n = 0
+          for p in glob.glob("**/*.manifest", recursive=True):
+              m = read(p)
+              nl = "\r\n" if "\r\n" in m else "\n"
+              lines = [l for l in m.split(nl) if not re.match(r"#\s*v\d+\s*$", l)]
+              while lines and lines[-1].strip() == "":
+                  lines.pop()
+              lines.append("# v3")
+              write(p, nl.join(lines) + nl)
+              n += 1
+          print("manifests اتحدثت:", n)
+          PYEOF
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Full-page background and fixed credit line"
+            git push
+          fi
+
+      - name: Trigger Pages rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "/repos/${{ github.repository }}/pages/builds" || true
