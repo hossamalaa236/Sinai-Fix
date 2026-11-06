@@ -1637,6 +1637,12 @@ async function patch_kernel(kbase, kmem, p_ucred, restore_info) {
         kmem.write64(sysent_661.add(off), sysent_661_save.read64(off));
     }
     log('sysent[661] restored');
+	
+    // RESTORE pktinfo fields (cleanup from restricted r/w stage)
+    log('restore pktinfo fields');
+    kmem.write64(restore_info[2], 0); // pktinfo_p  (k100_addr + 0x10)
+    kmem.write64(restore_info[3], 0); // w_pktinfo  (w_pktopts + 0x10)
+    log('pktinfo fields zeroed');
 
     // RESTORE pipebuf (last kmem operation)
     log('restore pipebuf');
@@ -1877,8 +1883,8 @@ function hostFail() {
 kexploit().then(() => {
     setTimeout(() => {
         try {
-            runPayload("./goldhen_2.4b18.12.bin");
-            msgs.innerHTML = "GoldHEN v2.4b18.12 Loaded ...";
+            runPayload("./goldhen_2.4b18.13.bin");
+            msgs.innerHTML = "GoldHEN v2.4b18.13 Loaded ...";
         } catch (e) {
             hostFail();
         }

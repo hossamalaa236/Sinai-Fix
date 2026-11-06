@@ -3,9 +3,7 @@ CACHE MANIFEST
 CACHE: 
 ../img.jpg
 ../style.css
-../sinai-background.jpg
-../sinai-background-mobile.jpg
-goldhen_2.4b18.12.bin
+goldhen_2.4b18.13.bin
 index.html
 900\alert.js
 900\config.js
@@ -32,4 +30,3 @@ index.html
 
 NETWORK: 
 * 
-# v4
