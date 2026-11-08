@@ -3,6 +3,8 @@ CACHE MANIFEST
 CACHE: 
 ../img.jpg
 ../style.css
+../sinai-background.jpg
+../sinai-background-mobile.jpg
 goldhen_2.4b18.13.bin
 index.html
 700\alert.js
@@ -34,4 +36,5 @@ index.html
 700\rop\850.js
 
 NETWORK: 
-* 
+*
+# v5
